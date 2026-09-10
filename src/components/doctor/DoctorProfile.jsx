@@ -70,26 +70,8 @@ export default function DoctorProfile() {
             <h3 className="text-sm font-bold text-slate-900">{formData.name || 'Doctor'}</h3>
             <p className="text-xs text-emerald-700 font-semibold mt-0.5">{formData.specialization}</p>
             <span className="inline-block mt-2.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Lic: {formData.licenseNumber}
+              Verified Healthcare Provider
             </span>
-          </div>
-
-          {/* Verified Clinical Practice Card */}
-          <div className="bg-slate-900 text-white rounded-2xl p-5 text-xs space-y-2.5 shadow-md">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Verified Clinical Practice Session</span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Clinical decision role: <span className="text-emerald-300 font-semibold">HEALTHCARE PROVIDER / PHYSICIAN</span>.
-            </p>
-            <div className="p-2 bg-slate-800 rounded-lg font-mono text-[10px] text-slate-300 break-all">
-              {token ? `${token.slice(0, 48)}...` : 'Active Secure Token'}
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Verified Physician Session
-            </div>
           </div>
         </div>
 

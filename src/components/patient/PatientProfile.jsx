@@ -72,26 +72,8 @@ export default function PatientProfile() {
             <h3 className="text-base font-bold text-slate-900">{formData.name || 'Patient'}</h3>
             <p className="text-xs text-slate-500 mt-0.5">{currentUser?.email}</p>
             <span className="inline-block mt-2.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-              Verified Patient ID: {currentUser?.id || currentUser?.email || 'Active'}
+              Active Patient
             </span>
-          </div>
-
-          {/* Verified Session Card */}
-          <div className="bg-slate-900 text-white rounded-2xl p-5 text-xs space-y-2.5 shadow-md">
-            <div className="flex items-center gap-2 text-indigo-400 font-bold">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Verified Encrypted Session</span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Cryptographically signed TLS session state with HIPAA-compliant token verification.
-            </p>
-            <div className="p-2 bg-slate-800 rounded-lg font-mono text-[10px] text-slate-300 break-all">
-              {token ? `${token.slice(0, 48)}...` : 'Active Secure Token'}
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Security Protocol: Active & Validated
-            </div>
           </div>
         </div>
 
