@@ -69,9 +69,15 @@ class ErrorBoundary extends Component {
 
 function MainLayout() {
   const { currentUser, isDoctor, isPatient } = useAuth();
-  // Always start on Landing Page when visiting the application
-  const [viewingLanding, setViewingLanding] = useState(true);
-  const [activeTab, setActiveTab] = useState(isDoctor ? 'analytics' : 'checker');
+  // If user is already authenticated with a valid token, stay on their dashboard upon refresh
+  const [viewingLanding, setViewingLanding] = useState(() => {
+    return !localStorage.getItem('medassist_token');
+  });
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem('medassist_active_tab');
+    if (saved) return saved;
+    return isDoctor ? 'analytics' : 'checker';
+  });
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
@@ -83,11 +89,19 @@ function MainLayout() {
       localStorage.removeItem('medassist_token');
       localStorage.removeItem('medassist_patient_logs');
       localStorage.removeItem('medassist_appointments');
+      localStorage.removeItem('medassist_active_tab');
     }
   }, []);
 
   const patientValidTabs = ['checker', 'history', 'booking', 'appointments', 'profile'];
   const doctorValidTabs = ['analytics', 'patients', 'appointments', 'profile'];
+
+  // Persist activeTab in localStorage
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem('medassist_active_tab', activeTab);
+    }
+  }, [activeTab]);
 
   // Strictly enforce role-based activeTab boundaries
   useEffect(() => {
@@ -103,7 +117,9 @@ function MainLayout() {
   useEffect(() => {
     if (!prevUserRef.current && currentUser) {
       setViewingLanding(false);
-      setActiveTab(currentUser.role === 'doctor' ? 'analytics' : 'checker');
+      const defaultTab = currentUser.role === 'doctor' ? 'analytics' : 'checker';
+      setActiveTab(defaultTab);
+      localStorage.setItem('medassist_active_tab', defaultTab);
     }
     prevUserRef.current = currentUser;
   }, [currentUser]);
@@ -112,6 +128,7 @@ function MainLayout() {
   useEffect(() => {
     if (!currentUser) {
       setViewingLanding(true);
+      localStorage.removeItem('medassist_active_tab');
     }
   }, [currentUser]);
 
