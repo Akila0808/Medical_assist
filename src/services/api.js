@@ -179,5 +179,30 @@ export const api = {
       throw new Error(data.detail || 'Failed updating appointment');
     }
     return data;
+  },
+
+  // --- Clinical Prescriptions & AI Medication Protocol ---
+  async getMedicineSuggestions(disease) {
+    const res = await fetch(`${API_BASE_URL}/api/medicines/suggestions?disease=${encodeURIComponent(disease)}`, {
+      headers: getAuthHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Failed fetching medicine recommendations');
+    }
+    return data;
+  },
+
+  async savePrescription(prescriptionData) {
+    const res = await fetch(`${API_BASE_URL}/api/triage/prescribe`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(prescriptionData)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Failed to submit prescription');
+    }
+    return data;
   }
 };

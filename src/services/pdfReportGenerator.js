@@ -161,8 +161,77 @@ export function generateClinicalPdfReport({
     theme: 'grid',
     headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold', fontSize: 9 },
     bodyStyles: { textColor: [51, 65, 85], fontSize: 9 },
-    styles: { cellPadding: 6 }
+    styles: { cellPadding: 5 }
   });
+
+  currentY = doc.lastAutoTable.finalY + 20;
+
+  // Section 5: Prescriptions / Medications Protocol
+  const prescriptions = diagnosticResult?.prescriptions || [];
+  const aiMedicines = diagnosticResult?.aiMedicines || [];
+  const medsToDisplay = prescriptions.length > 0 ? prescriptions : aiMedicines;
+
+  if (medsToDisplay.length > 0) {
+    // Check if we need a new page or have room
+    if (currentY > pageHeight - 160) {
+      doc.addPage();
+      currentY = 40;
+    }
+
+    const isOfficialRx = prescriptions.length > 0;
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text(
+      isOfficialRx 
+        ? '5. Official Physician Prescription & Treatment Protocol'
+        : '5. AI Recommended Medication Protocols (Subject to Doctor Sign-off)',
+      margin, 
+      currentY
+    );
+    currentY += 10;
+
+    const medRows = medsToDisplay.map((m) => [
+      m.name || 'Medication',
+      m.dosage || 'Standard',
+      m.frequency || 'As directed',
+      m.duration || '5 days',
+      m.instructions || 'Take as directed'
+    ]);
+
+    autoTable(doc, {
+      startY: currentY,
+      margin: { left: margin, right: margin },
+      head: [['Medicine Name', 'Dosage', 'Frequency', 'Duration', 'Instructions / Special Advice']],
+      body: medRows,
+      theme: 'striped',
+      headStyles: { 
+        fillColor: isOfficialRx ? [5, 150, 105] : [79, 70, 229], 
+        textColor: [255, 255, 255], 
+        fontStyle: 'bold', 
+        fontSize: 8.5 
+      },
+      bodyStyles: { textColor: [30, 41, 59], fontSize: 8.5 },
+      styles: { cellPadding: 4.5 }
+    });
+
+    currentY = doc.lastAutoTable.finalY + 12;
+
+    if (diagnosticResult?.doctorNotes) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text(`Physician Notes: ${diagnosticResult.doctorNotes}`, margin, currentY, { maxWidth: pageWidth - (margin * 2) });
+      currentY += 16;
+    }
+
+    if (diagnosticResult?.prescribedBy) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Electronically signed by: ${diagnosticResult.prescribedBy} • License verified on MedAssist Platform`, margin, currentY);
+    }
+  }
 
   // Footer Disclaimer
   doc.setFillColor(248, 250, 252);

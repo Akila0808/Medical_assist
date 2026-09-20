@@ -64,8 +64,14 @@ export function MedicalProvider({ children }) {
           predictedDisease: p.prediction || 'Clinical Evaluation',
           confidence: parseFloat(p.confidence_score) || 90,
           riskLevel: p.risk_level || 'Low',
-          reviewedByDoctor: false,
-          status: 'Awaiting Review',
+          reviewedByDoctor: Boolean(p.reviewed_by_doctor || (p.prescriptions && p.prescriptions.length > 0)),
+          status: p.status || (p.prescriptions && p.prescriptions.length > 0 ? 'Under Treatment' : 'Awaiting Review'),
+          doctorNotes: p.doctor_notes || '',
+          aiMedicines: p.ai_medicines || [],
+          prescriptions: p.prescriptions || [],
+          prescribedBy: p.prescribed_by || '',
+          prescribedAt: p.prescribed_at || null,
+          indicators: p.indicators || {},
           description: `Clinical assessment indicates ${p.prediction}.`,
           treatmentAdvisory: `Consultation record for ${p.prediction}.`
         }));
@@ -230,6 +236,58 @@ export function MedicalProvider({ children }) {
     }
   };
 
+  // Doctor issues clinical prescription and signs off on treatment protocol
+  const issuePrescription = async ({ logId, patientEmail, diagnosis, medicines, doctorNotes, caseStatus }) => {
+    let currentUser = null;
+    try {
+      const savedUser = localStorage.getItem('medassist_user');
+      if (savedUser) currentUser = JSON.parse(savedUser);
+    } catch {
+      // ignore
+    }
+
+    const doctorName = currentUser?.name || currentUser?.full_name || 'Attending Physician';
+    const doctorEmail = currentUser?.email || '';
+
+    // Optimistic UI update
+    setPatientLogs((prev) =>
+      prev.map((log) => {
+        if (log.id === logId || log.patientId === patientEmail) {
+          return {
+            ...log,
+            prescriptions: medicines,
+            doctorNotes: doctorNotes !== undefined ? doctorNotes : log.doctorNotes,
+            status: caseStatus || 'Under Treatment',
+            reviewedByDoctor: true,
+            prescribedBy: doctorName,
+            prescribedAt: new Date().toISOString()
+          };
+        }
+        return log;
+      })
+    );
+
+    try {
+      const res = await api.savePrescription({
+        log_id: logId,
+        patient_email: patientEmail,
+        doctor_email: doctorEmail,
+        doctor_name: doctorName,
+        diagnosis: diagnosis || 'Clinical Diagnosis',
+        medicines: medicines || [],
+        doctor_notes: doctorNotes || '',
+        case_status: caseStatus || 'Under Treatment'
+      });
+
+      addToast('success', `Official prescription signed and issued with ${medicines.length} medications.`);
+      setTimeout(() => refreshMedicalData(), 1000);
+      return res;
+    } catch (err) {
+      addToast('error', err.message || 'Failed saving prescription to MongoDB Atlas');
+      throw err;
+    }
+  };
+
   return (
     <MedicalContext.Provider
       value={{
@@ -240,6 +298,7 @@ export function MedicalProvider({ children }) {
         setActiveDiagnosis,
         addDiagnosticLog,
         updatePatientLog,
+        issuePrescription,
         bookAppointment,
         updateAppointment,
         refreshMedicalData,

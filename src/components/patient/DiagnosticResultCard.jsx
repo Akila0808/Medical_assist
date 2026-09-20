@@ -13,7 +13,9 @@ import {
   Utensils, 
   ShieldAlert, 
   Stethoscope, 
-  FileText 
+  FileText,
+  Pill,
+  Info
 } from 'lucide-react';
 
 export default function DiagnosticResultCard({ diagnosis, selectedSymptoms = [], indicators = {}, onBookSpecialist }) {
@@ -28,7 +30,15 @@ export default function DiagnosticResultCard({ diagnosis, selectedSymptoms = [],
       setIsDownloading(true);
       generateClinicalPdfReport({
         patient: currentUser,
-        diagnosticResult: diagnosis,
+        diagnosticResult: {
+          disease: diagnosis.predictedDisease || diagnosis.disease,
+          diseaseCategory: diagnosis.diseaseCategory || 'Clinical Triage',
+          confidence: diagnosis.confidence,
+          riskLevel: diagnosis.riskLevel,
+          treatmentAdvisory: diagnosis.treatmentAdvisory || {},
+          aiMedicines: diagnosis.aiMedicines || diagnosis.ai_medicines || [],
+          prescriptions: diagnosis.prescriptions || []
+        },
         symptomsList: diagnosis.matchedSymptoms || selectedSymptoms,
         indicators: diagnosis.indicators || indicators
       });
@@ -42,6 +52,7 @@ export default function DiagnosticResultCard({ diagnosis, selectedSymptoms = [],
   };
 
   const advisory = diagnosis.treatmentAdvisory || {};
+  const aiMedicines = diagnosis.aiMedicines || diagnosis.ai_medicines || [];
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl overflow-hidden transition-all">
@@ -136,6 +147,58 @@ export default function DiagnosticResultCard({ diagnosis, selectedSymptoms = [],
             </p>
           </div>
         </div>
+
+        {/* AI Suggested Medication Guidance */}
+        {aiMedicines && aiMedicines.length > 0 && (
+          <div className="p-5 rounded-2xl bg-indigo-50/40 border border-indigo-200/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                  <Pill className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-950">
+                    AI Suggested Clinical Medications
+                  </h4>
+                  <p className="text-[11px] text-indigo-600">
+                    Standard pharmacotherapy protocols for {diagnosis.predictedDisease || diagnosis.disease}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded-md">
+                Subject to Doctor Rx
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              {aiMedicines.map((med, idx) => (
+                <div key={idx} className="bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-slate-900">{med.name}</span>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-1.5 py-0.5 rounded">
+                      {med.dosage}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-600">
+                    <span>{med.frequency} • {med.duration}</span>
+                  </div>
+                  {med.instructions && (
+                    <p className="text-[10px] text-slate-500 italic pt-0.5">
+                      ℹ️ {med.instructions}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-start gap-1.5 p-2 bg-amber-50 rounded-lg border border-amber-200 text-[10px] text-amber-800">
+              <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-700" />
+              <span>
+                <strong>Clinical Advisory:</strong> Medication suggestions are computer-generated guidance protocols based on clinical literature. Do not consume without a licensed doctor's official signed prescription.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Recommended Specialist Referral */}
         <div className="p-4 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
